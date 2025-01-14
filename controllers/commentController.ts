@@ -1,6 +1,5 @@
 import { Request, Response, Router } from "express";
 import Comment from "../models/comment";
-import article from "../models/article";
 
 const router: Router = Router();
 
@@ -21,14 +20,14 @@ router.post('/comment', async (req: Request, res: Response) => {
 })
 
 router.get('/comment', async (req: Request, res: Response) => {
-    try{
-      const data = await Comment.find().populate('article');
-      res.json(data)
-    }
-    catch(error){
-      res.status(500).json({message: error})
-    }
-  })
+  try{
+    const data = await Comment.find().populate('article');
+    res.json(data)
+  }
+  catch(error){
+    res.status(500).json({message: error})
+  }
+})
 
 router.get('/comment/:id', async (req: Request, res: Response) => {
   try{

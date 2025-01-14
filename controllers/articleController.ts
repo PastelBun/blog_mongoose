@@ -19,44 +19,97 @@ router.post('/article', async (req: Request, res: Response) => {
   }
 })
 
+router.get('/article', async (req: Request, res: Response) => {
+  try{
+    const data = await Article.find();
+    res.json(data)
+  }
+  catch(error){
+    res.status(500).json({message: error})
+  }
+})
+
+router.get('/article/:id', async (req: Request, res: Response) => {
+  try{
+    const data = await Article.findById(req.params.id);
+    res.json(data)
+  }
+  catch(error){
+    res.status(500).json({message: error})
+  }
+})
+
+router.delete('/article/:id', async (req: Request, res: Response) => {
+  try{
+    const id = req.params.id;
+    await Article.findByIdAndDelete(id);
+    const data = await Article.find();
+    res.send(data);
+  }
+  catch(error){
+    res.status(500).json({message: error})
+  }
+})
+
+router.put('/article/:id', async (req: Request, res: Response) => {
+  try{
+    const id = req.params.id;
+    const updatedData = req.body;
+    const options = { new: true };  
+
+    const result = await Article.findByIdAndUpdate(
+        id, updatedData, options
+    )
+
+    res.send(result)
+  }
+  catch(error){
+    res.status(500).json({message: error})
+  }
+})
+
+
 router.post('/article/:id/comment', async (req: Request, res: Response) => {
-    try {
-      const id = req.params.id;
-      const { content } = req.body;
+  try{
+    const id = req.params.id;
+    const options = { new: true }; 
+    
+    const data = new Comment({
+      date: new Date(),
+      content: req.body.content,
+      article: id
+  })
+
+    // Use await instead of callback
+    const savedComment = await data.save();
+
+    // Update the article to push the comment into the comments array
+    const result = await Article.findByIdAndUpdate(
+      { _id: id },
+      { $push: { comments: savedComment._id } },
+      options
+    );
   
-      // Validate that content is provided
-      if (!content) {
-        return res.status(400).json({ message: 'Content is required for the comment.' });
-      }
+      res.send(result)
+    }
   
-      // Create a new comment
-      const newComment = new Comment({
-        date: new Date(),
-        content,
-        article: id
-      });
+  catch(error){
+    res.status(500).json({message: error})
+  }
+})
+
+router.get('/article/:id/comment', async (req: Request, res: Response) => {
+  try{
+    const id = req.params.id;
+
+    const result = await Article.findById(id).populate("comments");
   
-      // Save the new comment (using async/await)
-      const savedComment = await newComment.save();
-  
-      // Add the comment to the article's comments array
-      const updatedArticle = await Article.findByIdAndUpdate(
-        id,
-        { $push: { comments: savedComment._id } },
-        { new: true }
-      );
-  
-      if (!updatedArticle) {
-        return res.status(404).json({ message: 'Article not found' });
-      }
-  
-      // Respond with the updated article
-      res.status(200).json(updatedArticle);
-    } catch (error: any) {
-        res.status(500).json({ message: error.message || 'An error occurred' });
-      }
-      
-  });
-  
-  
+    res.send(result);
+  }
+  catch(error){
+    res.status(500).json({message: error})
+  }
+})
+
+
 export default router;
